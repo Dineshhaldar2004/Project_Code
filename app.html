@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Customer Management System</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f7fa;
+      color: #2c3e50;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    #user-info {
+      color: #3498db;
+      font-weight: bold;
+    }
+    #login-form, #app {
+      display: none;
+    }
+    #app {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .section {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    th {
+      background: #f8f9fa;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    tr:hover {
+      background: #f0f4f8;
+    }
+    .action-btn {
+      background: #3498db;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 2px;
+    }
+    .action-btn.delete {
+      background: #e74c3c;
+    }
+    .action-btn.edit {
+      background: #f39c12;
+    }
+    .action-btn:hover {
+      opacity: 0.9;
+    }
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .stage {
+      text-align: center;
+      padding: 15px;
+      background: #e8f4fd;
+      border-radius: 8px;
+    }
+    .stage h3 {
+      margin: 0;
+      color: #2c3e50;
+    }
+    .count {
+      font-size: 22px;
+      font-weight: bold;
+      color: #3498db;
+    }
+    #chartContainer {
+      margin-top: 20px;
+      height: 300px;
+      width: 100%;
+    }
+    #add-customer-form {
+      display: none;
+      margin-bottom: 20px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #3498db;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px 0;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .analytics-btn {
+      margin: 10px 0;
+    }
+    @media (max-width: 768px) {
+      .pipeline {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mini Customer Management System</h1>
+    <div id="user-info"></div>
+  </header>
+
+  <div id="login-form">
+    <h2>Login</h2>
+    <label for="username">Username:</label>
+    <input type="text" id="username" placeholder="Enter your username">
+    <label for="password">Password:</label>
+    <input type="password" id="password" placeholder="Enter your password">
+    <button id="login-btn">Login</button>
+  </div>
+
+  <div id="app">
+    <div class="section">
+      <div style="display: flex; justify-content: flex-end;">
+        <button id="logout-btn">Logout</button>
+      </div>
+      <h2>Customer Management</h2>
+      <button id="add-customer-toggle">Add New Customer</button>
+      <div id="add-customer-form">
+        <input type="text" id="customer-name" placeholder="Name">
+        <input type="email" id="customer-email" placeholder="Email">
+        <input type="tel" id="customer-phone" placeholder="Phone">
+        <input type="text" id="customer-company" placeholder="Company">
+        <select id="customer-status">
+          <option value="lead">Lead</option>
+          <option value="prospect">Prospect</option>
+          <option value="customer">Customer</option>
+          <option value="churned">Churned</option>
+        </select>
+        <button id="save-customer-btn">Save Customer</button>
+        <button id="cancel-add-btn">Cancel</button>
+      </div>
+      <table id="customer-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Company</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="customer-list">
+          <!-- Filled by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Sales Pipeline</h2>
+      <div class="pipeline">
+        <div class="stage">
+          <h3>Lead</h3>
+          <div id="lead-count" class="count">0</div>
+        </div>
+        <div class="stage">
+          <h3>Prospect</h3>
+          <div id="prospect-count" class="count">0</div>
+        </div>
+        <div class="stage">
+          <h3>Customer</h3>
+          <div id="customer-count" class="count">0</div>
+        </div>
+        <div class="stage">
+          <h3>Churned</h3>
+          <div id="churned-count" class="count">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Analytics</h2>
+      <button id="refresh-analytics" class="analytics-btn">Refresh Analytics</button>
+      <div id="chartContainer">
+        <canvas id="analyticsChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // In-memory "database"
+    const users = [
+      { username: 'admin', password: 'admin123', name: 'Admin User' }
+    ];
+    let customers = JSON.parse(localStorage.getItem('customers')) || [
+      { id: 1, name: 'Raj Sharma', email: 'raj@example.com', phone: '9876543210', company: 'Acme Inc', status: 'lead' },
+      { id: 2, name: 'Priya Patel', email: 'priya@example.com', phone: '8765432109', company: 'Globex', status: 'prospect' },
+      { id: 3, name: 'Amit Singh', email: 'amit@example.com', phone: '7654321098', company: 'Initech', status: 'customer' },
+      { id: 4, name: 'Neha Gupta', email: 'neha@example.com', phone: '6543210987', company: 'Umbrella', status: 'churned' }
+    ];
+
+    // DOM Elements
+    const loginForm = document.getElementById('login-form');
+    const app = document.getElementById('app');
+    const userInfo = document.getElementById('user-info');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const customerTable = document.getElementById('customer-table');
+    const customerList = document.getElementById('customer-list');
+    const addCustomerToggle = document.getElementById('add-customer-toggle');
+    const addCustomerForm = document.getElementById('add-customer-form');
+    const saveCustomerBtn = document.getElementById('save-customer-btn');
+    const cancelAddBtn = document.getElementById('cancel-add-btn');
+    const leadCount = document.getElementById('lead-count');
+    const prospectCount = document.getElementById('prospect-count');
+    const customerCount = document.getElementById('customer-count');
+    const churnedCount = document.getElementById('churned-count');
+    const refreshAnalytics = document.getElementById('refresh-analytics');
+    const analyticsChart = document.getElementById('analyticsChart');
+
+    // Chart instance
+    let chart = null;
+
+    // State
+    let currentUser = null;
+    let editingId = null;
+
+    // Event Listeners
+    loginBtn.addEventListener('click', handleLogin);
+    logoutBtn.addEventListener('click', handleLogout);
+    addCustomerToggle.addEventListener('click', toggleAddCustomerForm);
+    saveCustomerBtn.addEventListener('click', saveCustomer);
+    cancelAddBtn.addEventListener('click', cancelAddCustomer);
+    refreshAnalytics.addEventListener('click', renderAnalytics);
+
+    // Functions
+    function toggleUI() {
+      loginForm.style.display = currentUser ? 'none' : 'block';
+      app.style.display = currentUser ? 'block' : 'none';
+      userInfo.textContent = currentUser ? `Logged in as ${currentUser.name}` : '';
+      if (currentUser) {
+        renderCustomers();
+        updatePipelineCounts();
+        renderAnalytics();
+      }
+    }
+
+    function handleLogin() {
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+      const user = users.find(u => u.username === username && u.password === password);
+      if (user) {
+        currentUser = user;
+        toggleUI();
+      } else {
+        alert('Invalid credentials');
+      }
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      usernameInput.value = '';
+      passwordInput.value = '';
+      toggleUI();
+    }
+
+    function toggleAddCustomerForm() {
+      editingId = null;
+      document.getElementById('customer-name').value = '';
+      document.getElementById('customer-email').value = '';
+      document.getElementById('customer-phone').value = '';
+      document.getElementById('customer-company').value = '';
+      document.getElementById('customer-status').value = 'lead';
+      addCustomerForm.style.display = addCustomerForm.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function saveCustomer() {
+      const name = document.getElementById('customer-name').value.trim();
+      const email = document.getElementById('customer-email').value.trim();
+      const phone = document.getElementById('customer-phone').value.trim();
+      const company = document.getElementById('customer-company').value.trim();
+      const status = document.getElementById('customer-status').value;
+
+      if (!name || !email) {
+        alert('Name and Email are required');
+        return;
+      }
+
+      if (editingId) {
+        const index = customers.findIndex(c => c.id === editingId);
+        customers[index] = { id: editingId, name, email, phone, company, status };
+      } else {
+        const newId = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1;
+        customers.push({ id: newId, name, email, phone, company, status });
+      }
+
+      localStorage.setItem('customers', JSON.stringify(customers));
+      addCustomerForm.style.display = 'none';
+      renderCustomers();
+      updatePipelineCounts();
+      renderAnalytics();
+    }
+
+    function cancelAddCustomer() {
+      addCustomerForm.style.display = 'none';
+    }
+
+    function editCustomer(id) {
+      const customer = customers.find(c => c.id === id);
+      if (customer) {
+        document.getElementById('customer-name').value = customer.name;
+        document.getElementById('customer-email').value = customer.email;
+        document.getElementById('customer-phone').value = customer.phone;
+        document.getElementById('customer-company').value = customer.company;
+        document.getElementById('customer-status').value = customer.status;
+        editingId = id;
+        addCustomerForm.style.display = 'block';
+      }
+    }
+
+    function deleteCustomer(id) {
+      if (confirm('Are you sure you want to delete this customer?')) {
+        customers = customers.filter(c => c.id !== id);
+        localStorage.setItem('customers', JSON.stringify(customers));
+        renderCustomers();
+        updatePipelineCounts();
+        renderAnalytics();
+      }
+    }
+
+    function renderCustomers() {
+      customerList.innerHTML = '';
+      customers.forEach(customer => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${customer.name}</td>
+          <td>${customer.email}</td>
+          <td>${customer.phone}</td>
+          <td>${customer.company}</td>
+          <td>${customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}</td>
+          <td>
+            <button class="action-btn edit" onclick="editCustomer(${customer.id})">Edit</button>
+            <button class="action-btn delete" onclick="deleteCustomer(${customer.id})">Delete</button>
+          </td>
+        `;
+        customerList.appendChild(tr);
+      });
+    }
+
+    function updatePipelineCounts() {
+      leadCount.textContent = customers.filter(c => c.status === 'lead').length;
+      prospectCount.textContent = customers.filter(c => c.status === 'prospect').length;
+      customerCount.textContent = customers.filter(c => c.status === 'customer').length;
+      churnedCount.textContent = customers.filter(c => c.status === 'churned').length;
+    }
+
+    function renderAnalytics() {
+      const statuses = ['lead', 'prospect', 'customer', 'churned'];
+      const counts = statuses.map(status => 
+        customers.filter(c => c.status === status).length
+      );
+      
+      const chartCanvas = document.createElement('canvas');
+      chartCanvas.id = 'analyticsChart';
+      document.getElementById('chartContainer').innerHTML = '';
+      document.getElementById('chartContainer').appendChild(chartCanvas);
+
+      if (chart) chart.destroy();
+      chart = new Chart(chartCanvas, {
+        type: 'bar',
+        data: {
+          labels: statuses,
+          datasets: [{
+            label: 'Customers by Status',
+            data: counts,
+            backgroundColor: [
+              'rgba(75, 192, 192, 0.6)',
+              'rgba(54, 162, 235, 0.6)',
+              'rgba(153, 102, 255, 0.6)',
+              'rgba(255, 99, 132, 0.6)'
+            ],
+            borderColor: [
+              'rgba(75, 192, 192, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(153, 102, 255, 1)',
+              'rgba(255, 99, 132, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    // Make functions available globally for inline onclick handlers
+    window.editCustomer = editCustomer;
+    window.deleteCustomer = deleteCustomer;
+
+    // Initialize UI
+    toggleUI();
+  </script>
+</body>
+</html>
