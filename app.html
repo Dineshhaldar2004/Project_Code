@@ -3,447 +3,697 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mini Customer Management System</title>
+  <title>Fullscreen Industrial CRM</title>
+  <!-- Chart.js for analytics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Modern, readable font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
+    html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f5f7fa;
-      color: #2c3e50;
+      background: #121212;
+      color: #e0e0e0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
+    /* Login Screen */
+    .login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #181f29 60%, #222b39 100%);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      padding: 2rem;
+      box-sizing: border-box;
+    }
+    .login-screen.hidden { display: none; }
+    .login-container {
+      background: #202937;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    .login-container h1 { color: #a0d2ff; margin-bottom: 1.5rem; }
+    .login-container input {
+      width: 100%;
+      padding: 1rem;
+      margin: 0.8rem 0;
+      border: 1px solid #3d4a5e;
+      border-radius: 6px;
+      background: #272f3d;
+      color: #e0e0e0;
+      font-size: 1rem;
+      outline: none;
+    }
+    .login-container button {
+      width: 100%;
+      padding: 1rem;
+      margin: 12px 0 0;
+      background: #3a84dc;
+      color: #fff;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: background 0.2s;
+    }
+    .login-container button:hover { background: #4894ec; }
+    #login-error { color: #e74c3c; display: none; margin: 0.6rem 0; }
+    .demo-note { font-size: 0.8rem; color: #8ea7cf; margin-top: 1.5rem; }
+    /* App Header */
     header {
+      background: #1e2530;
+      padding: 1.5rem 2.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #ddd;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.15);
+      width: 100%;
+      color: #fff;
     }
-    #user-info {
-      color: #3498db;
-      font-weight: bold;
+    header h1 { color: #a0d2ff; font-size: 1.5rem; margin: 0; }
+    #user-info { color: #b4c7f6; }
+    #logout-btn {
+      background: #e74c3c;
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
     }
-    #login-form, #app {
-      display: none;
-    }
-    #app {
-      max-width: 1000px;
-      margin: 0 auto;
+    /* Main Content — Fullscreen, No Margins */
+    main {
+      width: 100%;
+      background: #161c23;
+      flex: 1;
     }
     .section {
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 100%;
+      padding: 2rem 2.5rem;
+      background: #161c23;
+      box-sizing: border-box;
+      border-bottom: 1px solid #242c38;
+      color: #e0e0e0;
     }
+    .section-highlight {
+      animation: highlight 2s ease;
+      box-shadow: none;
+    }
+    @keyframes highlight {
+      0% { box-shadow: 0 0 0 6px rgba(52, 152, 219, 0.7); }
+      100% { box-shadow: 0 0 0 0 transparent; }
+    }
+    /* Customer Table */
+    .filters {
+      display: flex;
+      gap: 0.8rem;
+      margin: 1.5rem 0 1rem 0;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filters input, .filters select, .filters button {
+      padding: 0.7rem;
+      border-radius: 5px;
+      border: 1px solid #2b3c54;
+      background: #232f44;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      outline: none;
+      flex: 1 1 240px;
+      min-width: 0;
+    }
+    .filters button {
+      background: #2874cc;
+      color: #fff;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      min-width: 134px;
+    }
+    .filters button:disabled { background: #555; }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
-    }
-    th, td {
-      padding: 12px 15px;
-      text-align: left;
-      border-bottom: 1px solid #e0e0e0;
+      margin: 1rem 0 1.5rem 0;
+      background: #181f29;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.1);
     }
     th {
-      background: #f8f9fa;
-      font-weight: bold;
-      color: #2c3e50;
+      background: #202937;
+      color: #a0d2ff;
+      padding: 0.8rem 1rem;
+      text-align: left;
+      font-weight: 500;
+      font-size: 0.95rem;
     }
-    tr:hover {
-      background: #f0f4f8;
+    td {
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid #23292f;
+      font-size: 0.95rem;
     }
-    .action-btn {
-      background: #3498db;
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: #1e252d; }
+    .pagination {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin: 1rem 0;
+      color: #b0b0b0;
+    }
+    .pagination button {
+      background: #2874cc;
       color: #fff;
       border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
+      padding: 0.6rem 1.1rem;
+      border-radius: 5px;
       cursor: pointer;
-      font-size: 14px;
-      margin: 2px;
+      font-weight: 500;
     }
-    .action-btn.delete {
-      background: #e74c3c;
+    .pagination button:disabled { background: #555; cursor: not-allowed; }
+    .pagination select {
+      padding: 0.6rem;
+      border-radius: 5px;
+      background: #232f44;
+      color: #e0e0e0;
+      border: 1px solid #2b3c54;
     }
-    .action-btn.edit {
-      background: #f39c12;
+    /* Status & Actions */
+    .status-badge {
+      display: inline-block;
+      padding: 0.22rem 0.7rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #fff;
     }
-    .action-btn:hover {
-      opacity: 0.9;
+    .status-lead { background: #f39c12; }
+    .status-prospect { background: #3498db; }
+    .status-customer { background: #2ecc71; }
+    .status-churned { background: #e74c3c; }
+    .action-btn {
+      background: #2874cc;
+      color: #fff;
+      border: none;
+      padding: 0.4rem 0.9rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin: 0.1rem;
     }
-    .pipeline {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-top: 20px;
+    .action-btn.edit { background: #f39c12; }
+    .action-btn.delete { background: #e74c3c; }
+    .action-btn:disabled { background: #555; cursor: not-allowed; }
+    /* Analytics Charts */
+    .chart-container {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin: 1rem 0 2rem 0;
     }
-    .stage {
-      text-align: center;
-      padding: 15px;
-      background: #e8f4fd;
+    .chart-box {
+      flex: 1 1 400px;
+      background: #202937;
       border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.1);
     }
-    .stage h3 {
+    canvas { width: 100% !important; height: 260px !important; }
+    /* About/Description Section */
+    .about {
+      background: #161c23;
+      border-radius: 0;
+      padding: 1.5rem 2.5rem;
       margin: 0;
-      color: #2c3e50;
     }
-    .count {
-      font-size: 22px;
-      font-weight: bold;
-      color: #3498db;
-    }
-    #chartContainer {
-      margin-top: 20px;
-      height: 300px;
-      width: 100%;
-    }
-    #add-customer-form {
+    .about h2 { color: #91cbff; }
+    .about p, .about ul, .about li { color: #b0b8c7; }
+    .about ul { padding-left: 2rem; }
+    /* Modal */
+    #customer-modal {
       display: none;
-      margin-bottom: 20px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(34,39,53,0.93);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
       box-sizing: border-box;
     }
-    button {
-      background: #3498db;
-      color: #fff;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 4px;
+    #customer-modal > div {
+      background: #202937;
+      border-radius: 10px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 430px;
+      color: #e0e0e0;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.25);
+    }
+    #customer-modal h3 { color: #a0d2ff; margin-bottom: 1rem; }
+    #customer-modal input,
+    #customer-modal select {
+      width: 100%;
+      padding: 0.9rem;
+      margin: 0.8rem 0;
+      background: #272a38;
+      color: #eee;
+      border: 1px solid #3d4a5e;
+      border-radius: 6px;
+      outline: none;
+    }
+    #customer-modal label { font-size: 1rem; display: block; margin-top: 0.6rem; }
+    #customer-modal .buttons {
+      display: flex;
+      gap: 1.1rem;
+      margin-top: 1.4rem;
+    }
+    #customer-modal .buttons button {
+      flex: 1;
+      padding: 0.9rem;
+      border-radius: 7px;
+      font-weight: 500;
+      font-size: 1rem;
       cursor: pointer;
-      margin: 5px 0;
+      border: none;
     }
-    button:hover {
-      opacity: 0.9;
-    }
-    .analytics-btn {
-      margin: 10px 0;
-    }
-    @media (max-width: 768px) {
-      .pipeline {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-      }
+    #customer-modal .buttons button.save { background: #27ae60; color: #fff; }
+    #customer-modal .buttons button.cancel { background: #e74c3c; color: #fff; }
+    /* Responsive */
+    @media (max-width: 900px) {
+      .chart-container { flex-direction: column; }
+      header, .section, .about { padding: 1.5rem; }
+      .filters, .pagination { flex-direction: column; gap: 0.6rem; }
+      .filters input, .filters select, .filters button { width: 100%; }
+      th, td { padding: 0.7rem 0.8rem; }
+      .about ul { padding-left: 1.5rem; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Mini Customer Management System</h1>
-    <div id="user-info"></div>
-  </header>
-
-  <div id="login-form">
-    <h2>Login</h2>
-    <label for="username">Username:</label>
-    <input type="text" id="username" placeholder="Enter your username">
-    <label for="password">Password:</label>
-    <input type="password" id="password" placeholder="Enter your password">
-    <button id="login-btn">Login</button>
+  <!-- Login Screen (shows first) -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-container">
+      <h1>Industrial CRM</h1>
+      <input type="text" id="login-username" placeholder="Username">
+      <input type="password" id="login-password" placeholder="Password">
+      <button id="login-btn">Login</button>
+      <div id="login-error">Invalid username or password</div>
+      <div class="demo-note">
+        Demo accounts: admin/admin123 (full access) or user/user123 (view only)
+      </div>
+    </div>
   </div>
 
-  <div id="app">
-    <div class="section">
-      <div style="display: flex; justify-content: flex-end;">
-        <button id="logout-btn">Logout</button>
-      </div>
-      <h2>Customer Management</h2>
-      <button id="add-customer-toggle">Add New Customer</button>
-      <div id="add-customer-form">
-        <input type="text" id="customer-name" placeholder="Name">
-        <input type="email" id="customer-email" placeholder="Email">
-        <input type="tel" id="customer-phone" placeholder="Phone">
-        <input type="text" id="customer-company" placeholder="Company">
+  <!-- App (hidden until login) -->
+  <div id="app" style="display: none;">
+    <header>
+      <h1>Industrial CRM</h1>
+      <span id="user-info"></span>
+      <button id="logout-btn">Logout</button>
+    </header>
+
+    <main>
+      <!-- Customer Management -->
+      <section class="section">
+        <h2>Customer Management</h2>
+        <div class="filters">
+          <input type="text" id="search-input" placeholder="Search customers...">
+          <select id="status-filter">
+            <option value="">All Statuses</option>
+            <option value="lead">Lead</option>
+            <option value="prospect">Prospect</option>
+            <option value="customer">Customer</option>
+            <option value="churned">Churned</option>
+          </select>
+          <button id="add-customer-btn">+ Add Customer</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Company</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="customer-list"></tbody>
+        </table>
+        <div class="pagination">
+          <button id="prev-page-btn" disabled>Prev</button>
+          <span id="page-info"></span>
+          <button id="next-page-btn">Next</button>
+          <span class="page-size">
+            <select id="page-size-select">
+              <option value="10">10 per page</option>
+              <option value="25" selected>25 per page</option>
+              <option value="50">50 per page</option>
+              <option value="100">100 per page</option>
+            </select>
+          </span>
+          <span id="total-records"></span>
+        </div>
+      </section>
+
+      <!-- Analytics Section (will be focused after login) -->
+      <section class="section" id="analytics-section">
+        <h2>Analytics & Trends</h2>
+        <div class="chart-container">
+          <div class="chart-box">
+            <canvas id="barChart"></canvas>
+          </div>
+          <div class="chart-box">
+            <canvas id="lineChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section class="section about">
+        <h2>About This Application</h2>
+        <p>
+          This <strong>Industrial CRM</strong> is a fullscreen, dark-theme customer management system designed for enterprise teams. It demonstrates modern web technologies for managing, analyzing, and visualizing customer data at scale.
+        </p>
+        <p>
+          <strong>Key Features:</strong>
+        </p>
+        <ul>
+          <li>Secure user authentication</li>
+          <li>Dynamic customer records (add, edit, delete, search)</li>
+          <li>Live, interactive analytics with bar and line charts</li>
+          <li>Consistent, comfortable dark theme</li>
+          <li>Responsive—works on mobile, tablet, and desktop</li>
+        </ul>
+        <p>
+          Use this demo as a learning tool, portfolio showcase, or rapid prototype for real-world business apps.
+        </p>
+      </section>
+    </main>
+
+    <!-- Add/Edit Customer Modal -->
+    <div id="customer-modal">
+      <div>
+        <h3 id="modal-title">Add Customer</h3>
+        <input type="hidden" id="edit-customer-id">
+        <label>Name</label>
+        <input type="text" id="customer-name">
+        <label>Company</label>
+        <input type="text" id="customer-company">
+        <label>Email</label>
+        <input type="email" id="customer-email">
+        <label>Phone</label>
+        <input type="tel" id="customer-phone">
+        <label>Status</label>
         <select id="customer-status">
           <option value="lead">Lead</option>
           <option value="prospect">Prospect</option>
           <option value="customer">Customer</option>
           <option value="churned">Churned</option>
         </select>
-        <button id="save-customer-btn">Save Customer</button>
-        <button id="cancel-add-btn">Cancel</button>
-      </div>
-      <table id="customer-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Company</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="customer-list">
-          <!-- Filled by JS -->
-        </tbody>
-      </table>
-    </div>
-
-    <div class="section">
-      <h2>Sales Pipeline</h2>
-      <div class="pipeline">
-        <div class="stage">
-          <h3>Lead</h3>
-          <div id="lead-count" class="count">0</div>
+        <div class="buttons">
+          <button class="save">Save</button>
+          <button class="cancel">Cancel</button>
         </div>
-        <div class="stage">
-          <h3>Prospect</h3>
-          <div id="prospect-count" class="count">0</div>
-        </div>
-        <div class="stage">
-          <h3>Customer</h3>
-          <div id="customer-count" class="count">0</div>
-        </div>
-        <div class="stage">
-          <h3>Churned</h3>
-          <div id="churned-count" class="count">0</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Analytics</h2>
-      <button id="refresh-analytics" class="analytics-btn">Refresh Analytics</button>
-      <div id="chartContainer">
-        <canvas id="analyticsChart"></canvas>
       </div>
     </div>
   </div>
 
   <script>
-    // In-memory "database"
-    const users = [
-      { username: 'admin', password: 'admin123', name: 'Admin User' }
-    ];
-    let customers = JSON.parse(localStorage.getItem('customers')) || [
-      { id: 1, name: 'Raj Sharma', email: 'raj@example.com', phone: '9876543210', company: 'Acme Inc', status: 'lead' },
-      { id: 2, name: 'Priya Patel', email: 'priya@example.com', phone: '8765432109', company: 'Globex', status: 'prospect' },
-      { id: 3, name: 'Amit Singh', email: 'amit@example.com', phone: '7654321098', company: 'Initech', status: 'customer' },
-      { id: 4, name: 'Neha Gupta', email: 'neha@example.com', phone: '6543210987', company: 'Umbrella', status: 'churned' }
-    ];
-
-    // DOM Elements
-    const loginForm = document.getElementById('login-form');
-    const app = document.getElementById('app');
-    const userInfo = document.getElementById('user-info');
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const customerTable = document.getElementById('customer-table');
-    const customerList = document.getElementById('customer-list');
-    const addCustomerToggle = document.getElementById('add-customer-toggle');
-    const addCustomerForm = document.getElementById('add-customer-form');
-    const saveCustomerBtn = document.getElementById('save-customer-btn');
-    const cancelAddBtn = document.getElementById('cancel-add-btn');
-    const leadCount = document.getElementById('lead-count');
-    const prospectCount = document.getElementById('prospect-count');
-    const customerCount = document.getElementById('customer-count');
-    const churnedCount = document.getElementById('churned-count');
-    const refreshAnalytics = document.getElementById('refresh-analytics');
-    const analyticsChart = document.getElementById('analyticsChart');
-
-    // Chart instance
-    let chart = null;
-
-    // State
-    let currentUser = null;
-    let editingId = null;
-
-    // Event Listeners
-    loginBtn.addEventListener('click', handleLogin);
-    logoutBtn.addEventListener('click', handleLogout);
-    addCustomerToggle.addEventListener('click', toggleAddCustomerForm);
-    saveCustomerBtn.addEventListener('click', saveCustomer);
-    cancelAddBtn.addEventListener('click', cancelAddCustomer);
-    refreshAnalytics.addEventListener('click', renderAnalytics);
-
-    // Functions
-    function toggleUI() {
-      loginForm.style.display = currentUser ? 'none' : 'block';
-      app.style.display = currentUser ? 'block' : 'none';
-      userInfo.textContent = currentUser ? `Logged in as ${currentUser.name}` : '';
-      if (currentUser) {
-        renderCustomers();
-        updatePipelineCounts();
-        renderAnalytics();
+    // ======== DATA & STATE ========
+    // In-memory customer data
+    let customers = [];
+    function generateMockCustomers(count = 1000) {
+      const statuses = ['lead', 'prospect', 'customer', 'churned'];
+      const companies = ['Acme Inc', 'Globex', 'Initech', 'Umbrella', 'TechCorp', 'Nexus', 'Venture'];
+      for (let i = 1; i <= count; i++) {
+        customers.push({
+          id: i,
+          name: `Customer ${i}`,
+          company: companies[Math.floor(Math.random() * companies.length)],
+          email: `customer${i}@example.com`,
+          phone: `+1${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+          status: statuses[Math.floor(Math.random() * statuses.length)]
+        });
       }
+      localStorage.setItem('customers', JSON.stringify(customers));
+    }
+    // Load or generate customers
+    if (localStorage.getItem('customers')) {
+      customers = JSON.parse(localStorage.getItem('customers'));
+    } else {
+      generateMockCustomers(1000);
     }
 
-    function handleLogin() {
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value.trim();
-      const user = users.find(u => u.username === username && u.password === password);
+    // Users
+    const users = [
+      { username: 'admin', password: 'admin123', name: 'Admin', role: 'admin' },
+      { username: 'user', password: 'user123', name: 'User', role: 'user' }
+    ];
+    let currentUser = null;
+    let barChart = null, lineChart = null;
+    let currentPage = 1, currentPageSize = 25, currentSearch = '', currentStatusFilter = '';
+
+    // ======== LOGIN/LOGOUT ========
+    function login() {
+      const u = document.getElementById('login-username').value.trim();
+      const p = document.getElementById('login-password').value.trim();
+      const user = users.find(uobj => uobj.username === u && uobj.password === p);
       if (user) {
         currentUser = user;
-        toggleUI();
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('app').style.display = 'block';
+        document.getElementById('user-info').textContent = `${user.name} (${user.role})`;
+        document.getElementById('login-error').style.display = 'none';
+        document.getElementById('add-customer-btn').disabled = user.role !== 'admin';
+        renderCustomerTable();
+
+        // ===== FOCUSED SCROLL: After login, scroll and highlight analytics section =====
+        const analyticsSection = document.getElementById('analytics-section');
+        analyticsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        analyticsSection.classList.add('section-highlight');
+        setTimeout(() => {
+          analyticsSection.classList.remove('section-highlight');
+        }, 2000);
       } else {
-        alert('Invalid credentials');
+        document.getElementById('login-error').style.display = 'block';
       }
     }
+    function logout() { location.reload(); }
+    document.getElementById('login-btn').addEventListener('click', login);
+    document.getElementById('logout-btn').addEventListener('click', logout);
+    document.getElementById('login-password').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') login();
+    });
 
-    function handleLogout() {
-      currentUser = null;
-      usernameInput.value = '';
-      passwordInput.value = '';
-      toggleUI();
+    // ======== CRM FUNCTIONS ========
+    function applyFilters() {
+      currentPage = 1;
+      currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
+      currentStatusFilter = document.getElementById('status-filter').value;
+      renderCustomerTable();
     }
-
-    function toggleAddCustomerForm() {
-      editingId = null;
-      document.getElementById('customer-name').value = '';
-      document.getElementById('customer-email').value = '';
-      document.getElementById('customer-phone').value = '';
-      document.getElementById('customer-company').value = '';
-      document.getElementById('customer-status').value = 'lead';
-      addCustomerForm.style.display = addCustomerForm.style.display === 'block' ? 'none' : 'block';
+    function prevPage() { if (currentPage > 1) { currentPage--; renderCustomerTable(); } }
+    function nextPage() { if ((currentPage * currentPageSize) < filterCustomers().length) { currentPage++; renderCustomerTable(); } }
+    function changePageSize() {
+      currentPageSize = parseInt(document.getElementById('page-size-select').value, 10);
+      currentPage = 1;
+      renderCustomerTable();
     }
-
-    function saveCustomer() {
-      const name = document.getElementById('customer-name').value.trim();
-      const email = document.getElementById('customer-email').value.trim();
-      const phone = document.getElementById('customer-phone').value.trim();
-      const company = document.getElementById('customer-company').value.trim();
-      const status = document.getElementById('customer-status').value;
-
-      if (!name || !email) {
-        alert('Name and Email are required');
-        return;
-      }
-
-      if (editingId) {
-        const index = customers.findIndex(c => c.id === editingId);
-        customers[index] = { id: editingId, name, email, phone, company, status };
-      } else {
-        const newId = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1;
-        customers.push({ id: newId, name, email, phone, company, status });
-      }
-
-      localStorage.setItem('customers', JSON.stringify(customers));
-      addCustomerForm.style.display = 'none';
-      renderCustomers();
-      updatePipelineCounts();
+    function filterCustomers() {
+      return customers.filter(c => {
+        const matchText = currentSearch === "" || c.name.toLowerCase().includes(currentSearch) ||
+          c.company.toLowerCase().includes(currentSearch) || c.email.toLowerCase().includes(currentSearch) || c.phone.includes(currentSearch);
+        const matchStatus = currentStatusFilter === "" || c.status === currentStatusFilter;
+        return matchText && matchStatus;
+      });
+    }
+    function renderCustomerTable() {
+      const filtered = filterCustomers();
+      const start = (currentPage - 1) * currentPageSize;
+      const end = start + currentPageSize;
+      const tableBody = document.getElementById('customer-list');
+      tableBody.innerHTML = '';
+      filtered.slice(start, end).forEach(customer => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${customer.name}</td>
+          <td>${customer.company}</td>
+          <td>${customer.email}</td>
+          <td>${customer.phone}</td>
+          <td><span class="status-badge status-${customer.status}">${customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}</span></td>
+          <td>
+            <button class="action-btn edit" data-id="${customer.id}" ${currentUser?.role !== 'admin' ? 'disabled' : ''}>Edit</button>
+            <button class="action-btn delete" data-id="${customer.id}" ${currentUser?.role !== 'admin' ? 'disabled' : ''}>Delete</button>
+          </td>`;
+        tableBody.appendChild(row);
+      });
+      document.getElementById('prev-page-btn').disabled = currentPage === 1;
+      document.getElementById('next-page-btn').disabled = (currentPage * currentPageSize) >= filtered.length;
+      document.getElementById('page-info').textContent = `Page ${currentPage} of ${Math.ceil(filtered.length / currentPageSize)}`;
+      document.getElementById('total-records').textContent = `${filtered.length} customers`;
+      attachEditDeleteHandlers();
       renderAnalytics();
     }
-
-    function cancelAddCustomer() {
-      addCustomerForm.style.display = 'none';
+    function attachEditDeleteHandlers() {
+      document.querySelectorAll('.action-btn.edit').forEach(btn => {
+        btn.addEventListener('click', () => editCustomer(parseInt(btn.getAttribute('data-id'), 10)));
+      });
+      document.querySelectorAll('.action-btn.delete').forEach(btn => {
+        btn.addEventListener('click', () => deleteCustomer(parseInt(btn.getAttribute('data-id'), 10)));
+      });
     }
-
-    function editCustomer(id) {
+    function openAddCustomerModal() {
+      document.getElementById('modal-title').textContent = 'Add Customer';
+      ['customer-name', 'customer-company', 'customer-email', 'customer-phone'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('customer-status').value = 'lead';
+      document.getElementById('edit-customer-id').value = '';
+      document.getElementById('customer-modal').style.display = 'flex';
+    }
+    function openEditCustomerModal(id) {
       const customer = customers.find(c => c.id === id);
       if (customer) {
+        document.getElementById('modal-title').textContent = 'Edit Customer';
+        document.getElementById('edit-customer-id').value = customer.id;
         document.getElementById('customer-name').value = customer.name;
+        document.getElementById('customer-company').value = customer.company;
         document.getElementById('customer-email').value = customer.email;
         document.getElementById('customer-phone').value = customer.phone;
-        document.getElementById('customer-company').value = customer.company;
         document.getElementById('customer-status').value = customer.status;
-        editingId = id;
-        addCustomerForm.style.display = 'block';
+        document.getElementById('customer-modal').style.display = 'flex';
       }
     }
-
+    function closeModal() { document.getElementById('customer-modal').style.display = 'none'; }
+    function saveCustomer() {
+      if (currentUser?.role !== 'admin') { alert('Only admins can edit customers.'); return; }
+      const id = parseInt(document.getElementById('edit-customer-id').value, 10);
+      const name = document.getElementById('customer-name').value.trim();
+      const company = document.getElementById('customer-company').value.trim();
+      const email = document.getElementById('customer-email').value.trim();
+      const phone = document.getElementById('customer-phone').value.trim();
+      const status = document.getElementById('customer-status').value;
+      if (!name || !email) { alert('Name and Email are required.'); return; }
+      if (id) {
+        const idx = customers.findIndex(c => c.id === id);
+        customers[idx] = { id, name, company, email, phone, status };
+      } else {
+        const newId = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1;
+        customers.push({ id: newId, name, company, email, phone, status });
+      }
+      localStorage.setItem('customers', JSON.stringify(customers));
+      closeModal();
+      renderCustomerTable();
+    }
+    function editCustomer(id) { openEditCustomerModal(id); }
     function deleteCustomer(id) {
+      if (currentUser?.role !== 'admin') { alert('Only admins can delete customers.'); return; }
       if (confirm('Are you sure you want to delete this customer?')) {
         customers = customers.filter(c => c.id !== id);
         localStorage.setItem('customers', JSON.stringify(customers));
-        renderCustomers();
-        updatePipelineCounts();
-        renderAnalytics();
+        renderCustomerTable();
       }
     }
 
-    function renderCustomers() {
-      customerList.innerHTML = '';
-      customers.forEach(customer => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${customer.name}</td>
-          <td>${customer.email}</td>
-          <td>${customer.phone}</td>
-          <td>${customer.company}</td>
-          <td>${customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}</td>
-          <td>
-            <button class="action-btn edit" onclick="editCustomer(${customer.id})">Edit</button>
-            <button class="action-btn delete" onclick="deleteCustomer(${customer.id})">Delete</button>
-          </td>
-        `;
-        customerList.appendChild(tr);
-      });
-    }
-
-    function updatePipelineCounts() {
-      leadCount.textContent = customers.filter(c => c.status === 'lead').length;
-      prospectCount.textContent = customers.filter(c => c.status === 'prospect').length;
-      customerCount.textContent = customers.filter(c => c.status === 'customer').length;
-      churnedCount.textContent = customers.filter(c => c.status === 'churned').length;
-    }
-
+    // ======== ANALYTICS ========
     function renderAnalytics() {
+      // Bar: status breakdown
       const statuses = ['lead', 'prospect', 'customer', 'churned'];
-      const counts = statuses.map(status => 
-        customers.filter(c => c.status === status).length
-      );
-      
-      const chartCanvas = document.createElement('canvas');
-      chartCanvas.id = 'analyticsChart';
-      document.getElementById('chartContainer').innerHTML = '';
-      document.getElementById('chartContainer').appendChild(chartCanvas);
-
-      if (chart) chart.destroy();
-      chart = new Chart(chartCanvas, {
+      const filtered = filterCustomers();
+      const counts = statuses.map(status => filtered.filter(c => c.status === status).length);
+      const barCtx = document.getElementById('barChart').getContext('2d');
+      if (barChart) barChart.destroy();
+      barChart = new Chart(barCtx, {
         type: 'bar',
         data: {
           labels: statuses,
           datasets: [{
             label: 'Customers by Status',
             data: counts,
-            backgroundColor: [
-              'rgba(75, 192, 192, 0.6)',
-              'rgba(54, 162, 235, 0.6)',
-              'rgba(153, 102, 255, 0.6)',
-              'rgba(255, 99, 132, 0.6)'
-            ],
-            borderColor: [
-              'rgba(75, 192, 192, 1)',
-              'rgba(54, 162, 235, 1)',
-              'rgba(153, 102, 255, 1)',
-              'rgba(255, 99, 132, 1)'
-            ],
-            borderWidth: 1
+            backgroundColor: ['rgba(243, 156, 18, 0.8)', 'rgba(52, 152, 219, 0.8)', 'rgba(46, 204, 113, 0.8)', 'rgba(231, 76, 60, 0.8)']
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          plugins: { legend: { display: false }},
           scales: {
-            y: { beginAtZero: true }
+            y: { beginAtZero: true, title: { display: true, text: 'Number of Customers' } },
+            x: { title: { display: true, text: 'Status' } }
+          }
+        }
+      });
+
+      // Line: Yearly growth
+      const lineYears = ['2019','2020','2021','2022','2023','2024','2025'];
+      const lineData = [150, 300, 450, 700, 1100, 1600, 2200];
+      const lineCtx = document.getElementById('lineChart').getContext('2d');
+      if (lineChart) lineChart.destroy();
+      lineChart = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: lineYears,
+          datasets: [{
+            label: 'Annual Data Increase',
+            data: lineData,
+            fill: false,
+            borderColor: '#27ae60',
+            backgroundColor: '#27ae60',
+            tension: 0.3,
+            borderWidth: 2,
+            pointRadius: 4,
+            pointBackgroundColor: '#3993ec'
+          }, {
+            label: 'Industry Benchmark',
+            data: [100, 220, 350, 600, 950, 1400, 2000],
+            fill: false,
+            borderColor: '#f39c12',
+            backgroundColor: '#f39c12',
+            borderDash: [3, 3],
+            borderWidth: 2,
+            pointRadius: 4,
+            pointBackgroundColor: '#f39c12'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true }},
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Number of Customers' } },
+            x: { title: { display: true, text: 'Year' } }
           }
         }
       });
     }
 
-    // Make functions available globally for inline onclick handlers
-    window.editCustomer = editCustomer;
-    window.deleteCustomer = deleteCustomer;
-
-    // Initialize UI
-    toggleUI();
+    // ======== INITIALIZE & ATTACH EVENT LISTENERS ========
+    document.getElementById('search-input').addEventListener('input', applyFilters);
+    document.getElementById('status-filter').addEventListener('change', applyFilters);
+    document.getElementById('add-customer-btn').addEventListener('click', openAddCustomerModal);
+    document.getElementById('prev-page-btn').addEventListener('click', prevPage);
+    document.getElementById('next-page-btn').addEventListener('click', nextPage);
+    document.getElementById('page-size-select').addEventListener('change', changePageSize);
+    document.querySelector('#customer-modal .save').addEventListener('click', saveCustomer);
+    document.querySelector('#customer-modal .cancel').addEventListener('click', closeModal);
   </script>
 </body>
 </html>
